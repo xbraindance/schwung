@@ -93,6 +93,7 @@ export function drawMenuList({
     labelX = LIST_LABEL_X,
     valueX = LIST_VALUE_X,
     valueAlignRight = false,
+    getValueX = null,
     valuePaddingRight = DEFAULT_VALUE_PADDING_RIGHT,
     labelGap = DEFAULT_LABEL_GAP,
     maxVisible = 0,
@@ -186,18 +187,35 @@ export function drawMenuList({
                 valueXFloor = labelX + minLabelWidth;
             }
 
-            resolvedValueX = SCREEN_WIDTH - (fullValue.length * DEFAULT_CHAR_WIDTH) - valuePaddingRight;
-            if (resolvedValueX < valueXFloor) {
-                resolvedValueX = valueXFloor;
-            }
+            if (getValueX) {
+                resolvedValueX = getValueX(fullValue, valueXFloor);
+                if (resolvedValueX <= valueXFloor) {
+                    /* Clamped to floor — value may not fit, apply char-count truncation */
+                    const maxValueWidth = Math.max(0, SCREEN_WIDTH - valuePaddingRight - resolvedValueX);
+                    const maxValueChars = Math.floor(maxValueWidth / DEFAULT_CHAR_WIDTH);
+                    if (maxValueChars > 0 && fullValue.length > maxValueChars) {
+                        if (isSelected && scrollSelectedValue) {
+                            displayValue = labelScroller.getScrolledText(fullValue, maxValueChars);
+                        } else {
+                            displayValue = truncateText(fullValue, maxValueChars);
+                        }
+                    }
+                }
+                /* Not clamped: pixel-accurate position, value fits exactly — no truncation */
+            } else {
+                resolvedValueX = SCREEN_WIDTH - (fullValue.length * DEFAULT_CHAR_WIDTH) - valuePaddingRight;
+                if (resolvedValueX < valueXFloor) {
+                    resolvedValueX = valueXFloor;
+                }
 
-            const maxValueWidth = Math.max(0, SCREEN_WIDTH - valuePaddingRight - resolvedValueX);
-            const maxValueChars = Math.floor(maxValueWidth / DEFAULT_CHAR_WIDTH);
-            if (maxValueChars > 0 && fullValue.length > maxValueChars) {
-                if (isSelected && scrollSelectedValue) {
-                    displayValue = labelScroller.getScrolledText(fullValue, maxValueChars);
-                } else {
-                    displayValue = truncateText(fullValue, maxValueChars);
+                const maxValueWidth = Math.max(0, SCREEN_WIDTH - valuePaddingRight - resolvedValueX);
+                const maxValueChars = Math.floor(maxValueWidth / DEFAULT_CHAR_WIDTH);
+                if (maxValueChars > 0 && fullValue.length > maxValueChars) {
+                    if (isSelected && scrollSelectedValue) {
+                        displayValue = labelScroller.getScrolledText(fullValue, maxValueChars);
+                    } else {
+                        displayValue = truncateText(fullValue, maxValueChars);
+                    }
                 }
             }
 
