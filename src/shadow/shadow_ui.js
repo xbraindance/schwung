@@ -10902,10 +10902,12 @@ function drawHierarchyEditor() {
             drawMenuList({
                 items,
                 selectedIndex: hierEditorSelectedIdx,
-                listArea: { topY: LIST_TOP_Y, bottomY: FOOTER_RULE_Y },
+                listArea: { topY: LIST_TOP_Y, bottomY: FOOTER_RULE_Y - 2 },
                 getLabel: (item) => item.label,
                 getValue: (item) => item.value,
                 valueAlignRight: true,
+                valueX: 72,
+                getValueX: (val, floor) => Math.max(floor, 128 - text_width(val) - 10),
                 editMode: hierEditorEditMode,
                 scrollSelectedValue: true,
                 prioritizeSelectedValue: true,
