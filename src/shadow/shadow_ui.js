@@ -56,7 +56,9 @@ import {
     hideOverlay,
     tickOverlay,
     drawOverlay,
-    menuLayoutDefaults
+    menuLayoutDefaults,
+    LIST_BOTTOM_CLEARANCE,
+    VALUE_RIGHT_CLEARANCE
 } from '/data/UserData/schwung/shared/menu_layout.mjs';
 
 import {
@@ -10814,7 +10816,7 @@ function drawHierarchyEditor() {
 
             /* Draw navigation arrows */
             print(4, centerY - 2, "<", 1);
-            print(SCREEN_WIDTH - 10, centerY - 2, ">", 1);
+            print(SCREEN_WIDTH - VALUE_RIGHT_CLEARANCE, centerY - 2, ">", 1);
         } else {
             print(4, centerY, "No presets available", 1);
         }
@@ -10902,12 +10904,12 @@ function drawHierarchyEditor() {
             drawMenuList({
                 items,
                 selectedIndex: hierEditorSelectedIdx,
-                listArea: { topY: LIST_TOP_Y, bottomY: FOOTER_RULE_Y - 2 },
+                listArea: { topY: LIST_TOP_Y, bottomY: LIST_BOTTOM_CLEARANCE },
                 getLabel: (item) => item.label,
                 getValue: (item) => item.value,
                 valueAlignRight: true,
-                valueX: 72,
-                getValueX: (val, floor) => Math.max(floor, 128 - text_width(val) - 10),
+                valueX: 72,  // Lower than LIST_VALUE_X (92) — wider label room before truncation on non-selected rows
+                getValueX: (val, floor) => Math.max(floor, SCREEN_WIDTH - text_width(val) - VALUE_RIGHT_CLEARANCE),
                 editMode: hierEditorEditMode,
                 scrollSelectedValue: true,
                 prioritizeSelectedValue: true,
@@ -13620,7 +13622,7 @@ function drawComponentEdit() {
 
         /* Draw navigation arrows */
         print(4, centerY - 2, "<", 1);
-        print(SCREEN_WIDTH - 10, centerY - 2, ">", 1);
+        print(SCREEN_WIDTH - VALUE_RIGHT_CLEARANCE, centerY - 2, ">", 1);
     } else {
         /* No presets - show message */
         const msg = "No presets";
@@ -15776,8 +15778,14 @@ globalThis.onMidiMessageInternal = function(data) {
 
     /* When a module UI is loaded, route MIDI to it (except Back button) */
     if (view === VIEWS.COMPONENT_EDIT && loadedModuleUi) {
-        /* Always handle Back ourselves to allow exiting */
+        /* Back button: give module a chance to navigate internally first.
+         * If handleBack() returns true the module consumed it; otherwise
+         * the host handles it (unload UI + go to chain edit). */
         if ((status & 0xF0) === 0xB0 && d1 === MoveBack && d2 > 0) {
+            if (loadedModuleUi.handleBack && loadedModuleUi.handleBack()) {
+                needsRedraw = true;
+                return;
+            }
             handleBack();
             return;
         }
