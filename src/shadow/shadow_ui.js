@@ -10910,12 +10910,10 @@ function drawHierarchyEditor() {
             drawMenuList({
                 items,
                 selectedIndex: hierEditorSelectedIdx,
-                listArea: { topY: LIST_TOP_Y, bottomY: LIST_BOTTOM_CLEARANCE },
+                listArea: { topY: LIST_TOP_Y, bottomY: FOOTER_RULE_Y },
                 getLabel: (item) => item.label,
                 getValue: (item) => item.value,
                 valueAlignRight: true,
-                valueX: 72,  // Lower floor for non-selected rows to maximize label width before truncation
-                getValueX: (val, floor) => Math.max(floor, SCREEN_WIDTH - text_width(val) - VALUE_RIGHT_CLEARANCE),
                 editMode: hierEditorEditMode,
                 scrollSelectedValue: true,
                 prioritizeSelectedValue: true,
@@ -12737,6 +12735,14 @@ function handleSelect() {
 }
 
 function handleBack() {
+    /* Allow loaded module to handle back press first (pre-emption hook) */
+    if (view === VIEWS.COMPONENT_EDIT && loadedModuleUi && typeof loadedModuleUi.handleBack === 'function') {
+        if (loadedModuleUi.handleBack()) {
+            needsRedraw = true;
+            return;  /* Module consumed the back press */
+        }
+    }
+
     hideOverlay();
     switch (view) {
         case VIEWS.SLOTS:
